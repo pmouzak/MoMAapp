@@ -1,0 +1,534 @@
+<html>
+    <head>
+        <title>Panagiotis Mouzakis</title>
+        <script type="text/javascript" src="cordova.js"></script>
+        <meta name="format-detection" content="telephone=no">
+        <meta name="msapplication-tap-highlight" content="no">
+        <meta name="viewport" content="initial-scale=1, width=device-width, viewport-fit=cover">
+        <link rel="stylesheet" type="text/css" href="css/jquery.mobile.min.css">
+        <script type="text/javascript" src="js/jquery.min.js"></script>
+        <script type="text/javascript" src="js/jquery.mobile.js"></script>
+        <style>
+            .image img {
+                max-width: 96%;
+                max-height: 96%;
+                margin: 2%;
+                }
+            .image {
+                padding-right: 200px;
+                text-align: center;    /* <- this one */
+                max-height: 100%;
+                overflow: hidden;
+                }
+            .ui-filter-inset {
+                margin-top: 0;
+                }
+        </style>
+    </head>
+    <body>
+        <div data-role="page" id="page1">
+            <div data-role="header">
+                <h1> MoMAapp </h1>
+            </div>
+            <div role="main" class="ui-content">
+                <div data-role="tabs">
+                    <div data-role="navbar">
+                        <ul>
+                            <li><a href="#fragment-1">Search Artist</a></li>
+                            <li><a href="#fragment-2">Search ArtWork</a></li>
+                            <li><a href="#fragment-3">SPARQL Query Search</a></li>
+                        </ul>
+                    </div>
+                    <div id="fragment-1">
+                        <p>Search Artist</p>
+                        <form>
+                            <div id="search-artist-name-txt-div">
+                                <input type="search" name="search-artist-name-txt" id="search-artist-name-txt" value="" placeholder="Artist Name">
+                            </div>
+                            <div id="search-artist-name-div">
+                                <ul id="search-artist-name" data-role="listview" data-inset="true" data-filter="true" data-filter-placeholder="Artist Name" data-filter-theme="a"></ul>
+                            </div>
+                            <div id="search-birth-year-txt-div">
+                                <input type="search" name="search-birth-year-txt" id="search-birth-year-txt" value="" placeholder="Birth Year">
+                            </div>
+                            <div id="search-death-year-txt-div">
+                                <input type="search" name="search-death-year-txt" id="search-death-year-txt" value="" placeholder="Death Year">
+                            </div>
+                        </form>
+                        <div id="artist_details"></div>
+                    </div>
+                    <div id="fragment-2">
+                        <p>Search Artwork</p>
+                        <form>
+                            <div id="search-artwork-title-txt-div">
+                                <input type="search" name="search-artwork-title-txt" id="search-artwork-title-txt" value="" placeholder="ArtWork Title">
+                            </div>
+                            <div id="search-artwork-title-div">
+                                <ul id="search-artwork-title" data-role="listview" data-inset="true" data-filter="true" data-filter-placeholder="ArtWork Title" data-filter-theme="a"></ul>
+                            </div>
+                            <div id="search-date-year-txt-div">
+                                <input type="search" name="search-date-year-txt" id="search-date-year-txt" value="" placeholder="Date (Year)">
+                            </div>
+                            <div id="search-medium-txt-div">
+                                <input type="search" name="search-medium-txt" id="search-medium-txt" value="" placeholder="Medium">
+                            </div>
+                            <div id="search-medium-div">
+                                <ul id="search-medium" data-role="listview" data-inset="true" data-filter="true" data-filter-placeholder="Medium" data-filter-theme="a"></ul>
+                            </div>
+                            <div id="search-classification-txt-div">
+                                <input type="search" name="search-classification-txt" id="search-classification-txt" value="" placeholder="Classification">
+                            </div>
+                            <div id="search-classification-div">
+                                <ul id="search-classification" data-role="listview" data-inset="true" data-filter="true" data-filter-placeholder="Classification" data-filter-theme="a"></ul>
+                            </div>
+                        </form>
+                        <div id="artwork_details"></div>
+                    </div>
+                    <div id="fragment-3">
+                        <form>
+                            <label for="text-1"> Write SPARQL query </label>
+                            <input type="text" name="text-1" id="sparql_query" value="">
+                        </form>
+                        <button class="ui-btn" id="submit_sparql">Search</button>
+                        <pre id="sparql_result"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+    <script>
+
+//replace the ip with local ip
+        var url_server = "http://192.168.1.101:3030/Final/";
+        var output_format = 'json';
+        var sample_sparql_query = "SELECT ?A ?B ?C WHERE {?A ?B ?C} limit 25";
+        $( "#sparql_query" ).val(sample_sparql_query);
+        function build_query(select_query,param_1,param_2,param_3,param_4) {
+            var select_query = select_query.replace("XX1", param_1);
+            var select_query = select_query.replace("XX2", param_2);
+            var select_query = select_query.replace("XX3", param_3);
+            var select_query = select_query.replace("XX4", param_4);
+            var query = [
+                "prefix xsd: <http://www.w3.org/2001/XMLSchema#>",
+                "prefix dct: <http://www.w3.org/2002/07/owl#>",
+                "prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>",
+                "prefix owl: <http://www.w3.org/2002/07/owl#>",
+                "prefix skos: <http://www.w3.org/2004/02/skos/core#>",
+                "prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>",
+                "prefix foaf: <http://xmlns.com/foaf/0.1/>",
+                "prefix dc: <http://purl.org/dc/elements/1.1/>",
+                "prefix edm: <http://www.europeana.eu/schemas/edm/>",
+                "prefix dbo: <http://dbpedia.org/ontology/>",
+                select_query
+            ].join(" ");
+            returned_query = url_server+"?query="+ encodeURIComponent(query) +"&format="+output_format;
+            return returned_query;
+        }
+        
+//sparql query logic starts
+        function query_server_and_display_sparql_result() {
+            var queryUrl = build_query($('#sparql_query').val());
+            $.ajax({ url: queryUrl,
+                    type: 'get',
+                    dataType: 'json',
+                    crossDomain:true,
+                    success: function(output) {
+                        $("#sparql_result").empty().append(JSON.stringify(output, undefined, 2));
+                    },
+                    error: function( jqXHR, textStatus, errorThrown ) {
+                    }
+            })
+        }
+        $( "#submit_sparql" ).click(function(evt) {
+            query_server_and_display_sparql_result();
+        });
+//sparql query logic ends
+
+//select artist name logic starts
+        $( "#search-artist-name" ).on( "filterablebeforefilter", function ( e, data ) {
+            var $ul = $( this ),
+                $input = $( data.input ),
+                value = $input.val(),
+                html = "";
+            $ul.html( "" );
+            if ( value && value.length > 0 ) {
+                $ul.html( "<li><div class='ui-loader'><span class='ui-icon ui-icon-loading'></span></div></li>" );
+                $ul.listview( "refresh" );
+                var queryUrl = build_query('SELECT DISTINCT ?Artist WHERE {?a edm:begin ?BirthDate. ?a edm:end ?DeathDate. ?a skos:prefLabel ?Artist. FILTER regex (?DeathDate, "XX1", "i" ) FILTER regex (?BirthDate, "XX2", "i" ) FILTER regex (?Artist, "XX3", "i" )} group by ?Artist limit 50',$("#search-death-year-txt" ).val(),$("#search-birth-year-txt").val(),$input.val())
+                $.ajax({
+                    url: queryUrl,
+                    dataType: "jsonp",
+                    crossDomain: true,
+                    data: {
+                        q: $input.val()
+                    }
+                })
+                .then( function ( response ) {
+                    var bindings = response['results']['bindings'];
+                    for(var i = 0; i < bindings.length; i++) {
+                        var the_artist = bindings[i]['Artist']['value'];
+                        html += "<li>" + the_artist + "</li>";
+                    };
+                    $ul.html( html );
+                    $ul.listview( "refresh" );
+                    $ul.trigger( "updatelayout");
+                });
+            }
+        });
+        $( "#search-artist-name-txt-div" ).click(function() {
+            $(this).hide();
+            $( "#search-artist-name-div" ).show();
+            $( "#search-artist-name-div input").focus();
+        });
+        $('#search-artist-name').on('click', 'li', function() {
+            $( "#search-artist-name-txt-div" ).show()
+            $( "#search-artist-name-txt" ).val($(this).text())
+            $( "#search-artist-name-div" ).hide();
+            populate_artist_details("","",$(this).text());
+            populate_artist_details_2($(this).text());
+            $("#art_details").empty();
+        });
+        $( "#search-artist-name-div" ).hide()
+//select artist name logic ends
+        
+//artist detail results logic starts
+        function populate_artist_details(xx1,xx2,xx3) {
+            var queryUrl = build_query('SELECT DISTINCT ?Artist ?ArtistBio ?BirthDate ?DeathDate WHERE {?a skos:prefLabel ?Artist. ?a skos:note ?ArtistBio. ?a edm:begin ?BirthDate. ?a edm:end ?DeathDate. FILTER regex (?DeathDate, "XX1", "i" ) FILTER regex (?BirthDate, "XX2", "i" ) FILTER regex (?Artist, "XX3", "i" ) }',xx1,xx2,xx3);
+            $.ajax({ url: queryUrl,
+                    type: 'get',
+                    success: function(output) {
+                        var artist_name = output['results']['bindings'][0]['Artist']['value'];
+                        var artist_bio = output['results']['bindings'][0]['ArtistBio']['value'];
+                        var artist_birth_date = output['results']['bindings'][0]['BirthDate']['value'];
+                        var artist_death_date = output['results']['bindings'][0]['DeathDate']['value'];
+                        $("#artist_details").empty();
+                        $("#artist_details").append("Artist : "+artist_name+"<br>");
+                        $("#artist_details").append("Bio : "+artist_bio+"<br>");
+                        $("#artist_details").append("Birth Date : "+artist_birth_date+"<br>");
+                        $("#artist_details").append("Death Date : "+artist_death_date+"<br>");
+                        $("#artist_details").append('<div id="dbpedialink"></div>');
+                        $("#artist_details").append('<div class="ui-field-contain"><select name="select-art" id="select-art"></select></div>');
+                        populate_arts(xx3);
+                    }
+            })
+        }
+//artist detail results logic ends  
+        
+//artist detail results logic dbpedia starts
+        function populate_artist_details_2(xx1) {
+            var queryUrl = build_query('SELECT  DISTINCT ?dbpediaLink WHERE {SERVICE <http://dbpedia.org/sparql/> {?dbpediaLink foaf:name ?Artist. FILTER (lang(?Artist) = "en") FILTER regex(?Artist, "XX1", "i" )}}',xx1);
+            $.ajax({ url: queryUrl,
+                    type: 'get',
+                    success: function(output) {
+                        var dbpediaLink = output['results']['bindings'][0]['dbpediaLink']['value'];
+                        $("#dbpedialink").append('dbpedia Link : <a href="'+dbpediaLink+'" target="_new">'+dbpediaLink+'</a><br>');
+                    }
+            })
+        }
+//artist detail results logic dbpedia ends
+        
+//Select ArtWork of an Artist starts
+        function populate_arts(param1) {
+            var queryUrl = build_query('SELECT ?Title WHERE {?a skos:prefLabel "XX1". ?b dc:creator ?a. ?b dc:title ?Title. }',param1)
+            $.ajax({ url: queryUrl,
+                    type: 'get',
+                    success: function(output) {
+                        var bindings = output['results']['bindings'];
+                        $("#select-art").append('<option value="Select ArtWork">Select ArtWork</option>');
+                        for(var i = 0; i < bindings.length; i++) {
+                            var the_title = bindings[i]['Title']['value'];
+                            $("#select-art").append('<option value="'+the_title+'">'+the_title+'</option>');
+                            $("#fragment-1").append('<div id="art_details"></div>');
+                        }
+                        $('#select-art').change(function() {
+                            var selected_art = $("#select-art").val();
+                            $("#art_details").empty().append( selected_art );
+                            populate_art_details(param1,selected_art);
+                        });
+                    }
+            })
+        }
+//Select ArtWork of an Artist ends
+        
+//Select detail of ArtWork of an Artist starts
+        function populate_art_details(param1,param2) {
+            var queryUrl = build_query('SELECT ?Date ?Medium ?Classification ?URL ?ThumbnailURL WHERE {?a skos:prefLabel "XX1".?b dc:creator ?a.?b dc:title "XX2".?b dc:date ?Date.?b dct:medium ?Medium.?b dc:type ?Classification.?b owl:sameAs ?URL.?b edm:hasView ?ThumbnailURL.}',param1,param2);
+            $.ajax({ url: queryUrl,
+                    type: 'get',
+                    success: function(output) {
+                        var art_date = output['results']['bindings'][0]['Date']['value'];
+                        var art_medium = output['results']['bindings'][0]['Medium']['value'];
+                        var art_classification = output['results']['bindings'][0]['Classification']['value'];
+                        var art_url = output['results']['bindings'][0]['URL']['value'];
+                        var art_thumb = output['results']['bindings'][0]['ThumbnailURL']['value'];
+                        $("#art_details").empty();
+                        $("#art_details").append('<img src="'+art_thumb+'" /><br>');
+                        $("#art_details").append("Date : "+art_date+"<br>");
+                        $("#art_details").append("Medium : "+art_medium+"<br>");
+                        $("#art_details").append("Classification : "+art_classification+"<br>");
+                        $("#art_details").append('URL : <a href="'+art_url+'" target="_blank">'+art_url+'</a><br>');
+                    }
+            })
+        }
+//Select detail of ArtWork of an Artist ends
+
+//select birth year logic starts
+        $( "#search-birth-year" ).on( "filterablebeforefilter", function ( e, data ) {
+            var $ul = $( this ),
+                $input = $( data.input ),
+                value = $input.val(),
+                html = "";
+            $ul.html( "" );
+            if ( value && value.length > 0 ) {
+                $ul.html( "<li><div class='ui-loader'><span class='ui-icon ui-icon-loading'></span></div></li>" );
+                $ul.listview( "refresh" );
+                var queryUrl = build_query('SELECT DISTINCT ?BirthDate WHERE {?a edm:begin ?BirthDate. ?a edm:end ?DeathDate. ?a skos:prefLabel ?Artist. FILTER regex (?DeathDate, "XX1", "i" ) FILTER regex (?BirthDate, "XX2", "i" ) FILTER regex (?Artist, "XX3", "i" )} group by ?BirthDate limit 50','',$input.val(),'')
+                $.ajax({
+                    url: queryUrl,
+                    dataType: "jsonp",
+                    crossDomain: true,
+                    data: {
+                        q: $input.val()
+                    }
+                })
+                .then( function ( response ) {
+                    var bindings = response['results']['bindings'];
+                    for(var i = 0; i < bindings.length; i++) {
+                        var the_artist = bindings[i]['BirthDate']['value'];
+                        html += "<li>" + the_artist + "</li>";
+                    };
+                    $ul.html( html );
+                    $ul.listview( "refresh" );
+                    $ul.trigger( "updatelayout");
+                });
+            }
+        });
+//Select birth year logic ends
+
+//Select death year logic starts
+        $( "#search-death-year" ).on( "filterablebeforefilter", function ( e, data ) {
+            var $ul = $( this ),
+                $input = $( data.input ),
+                value = $input.val(),
+                html = "";
+            $ul.html( "" );
+            if ( value && value.length > 0 ) {
+                $ul.html( "<li><div class='ui-loader'><span class='ui-icon ui-icon-loading'></span></div></li>" );
+                $ul.listview( "refresh" );
+                var queryUrl = build_query('SELECT DISTINCT ?DeathDate WHERE {?a edm:begin ?BirthDate. ?a edm:end ?DeathDate. ?a skos:prefLabel ?Artist. FILTER regex (?DeathDate, "XX1", "i" ) FILTER regex (?BirthDate, "XX2", "i" ) FILTER regex (?Artist, "XX3", "i" )} group by ?DeathDate limit 50',$input.val(),'','')
+                $.ajax({
+                    url: queryUrl,
+                    dataType: "jsonp",
+                    crossDomain: true,
+                    data: {
+                        q: $input.val()
+                    }
+                })
+                .then( function ( response ) {
+                    var bindings = response['results']['bindings'];
+                    for(var i = 0; i < bindings.length; i++) {
+                        var the_artist = bindings[i]['DeathDate']['value'];
+                        html += "<li>" + the_artist + "</li>";
+                    };
+                    $ul.html( html );
+                    $ul.listview( "refresh" );
+                    $ul.trigger( "updatelayout");
+                });
+            }
+        });
+//Select death year logic ends
+
+//Select artwork title logic starts
+        $( "#search-artwork-title" ).on( "filterablebeforefilter", function ( e, data ) {
+            var $ul = $( this ),
+                $input = $( data.input ),
+                value = $input.val(),
+                html = "";
+            $ul.html( "" );
+            if ( value && value.length > 0 ) {
+                $ul.html( "<li><div class='ui-loader'><span class='ui-icon ui-icon-loading'></span></div></li>" );
+                $ul.listview( "refresh" );
+                var queryUrl = build_query('SELECT DISTINCT ?ArtWork WHERE {?b dc:title ?ArtWork. ?b dc:date ?ArtDate. ?b dct:medium ?Medium. ?b dc:type ?Classification. FILTER regex (?ArtWork, "XX1", "i") FILTER regex (?ArtDate, "XX2", "i") FILTER regex (?Medium, "XX3", "i") FILTER regex (?Classification, "XX4", "i")} limit 50',$input.val(),$("#search-date-year-txt").val(),$("#search-medium-txt").val(),$("#search-classification-txt").val())
+                $.ajax({
+                    url: queryUrl,
+                    dataType: "jsonp",
+                    crossDomain: true,
+                    data: {
+                        q: $input.val()
+                    }
+                })
+                .then( function ( response ) {
+                    var bindings = response['results']['bindings'];
+                    for(var i = 0; i < bindings.length; i++) {
+                        var the_artist = bindings[i]['ArtWork']['value'];
+                        html += "<li>" + the_artist + "</li>";
+                    };
+                    $ul.html( html );
+                    $ul.listview( "refresh" );
+                    $ul.trigger( "updatelayout");
+                });
+            }
+        });
+        $( "#search-artwork-title-txt-div" ).click(function() {
+            $(this).hide();
+            $( "#search-artwork-title-div" ).show();
+            $( "#search-artwork-title-div input" ).focus();
+        });
+        $('#search-artwork-title').on('click', 'li', function() {
+            $( "#search-artwork-title-txt-div" ).show()
+            $( "#search-artwork-title-txt" ).val($(this).text())
+            $( "#search-artwork-title-div" ).hide();
+            populate_artwork_details($(this).text(),"","","");
+            $("#artwork_details").empty();
+        });
+        $( "#search-artwork-title-div" ).hide()
+//Select artwork title logic ends
+
+//Select date year logic starts
+        $( "#search-date-year" ).on( "filterablebeforefilter", function ( e, data ) {
+            var $ul = $( this ),
+                $input = $( data.input ),
+                value = $input.val(),
+                html = "";
+            $ul.html( "" );
+            if ( value && value.length > 0 ) {
+                $ul.html( "<li><div class='ui-loader'><span class='ui-icon ui-icon-loading'></span></div></li>" );
+                $ul.listview( "refresh" );
+                var queryUrl = build_query('SELECT DISTINCT ?ArtDate WHERE {?b dc:title ?ArtWork. ?b dc:date ?ArtDate. ?b dct:medium ?Medium. ?b dc:type ?Classification. FILTER regex (?ArtWork, "XX1", "i") FILTER regex (?ArtDate, "XX2", "i") FILTER regex (?Medium, "XX3", "i") FILTER regex (?Classification, "XX4", "i")} limit 50',$("#search-artwork-title-txt" ).val(),$input.val(),$("#search-medium-txt").val(),$("#search-classification-txt").val())
+                $.ajax({
+                    url: queryUrl,
+                    dataType: "jsonp",
+                    crossDomain: true,
+                    data: {
+                        q: $input.val()
+                    }
+                })
+                .then( function ( response ) {
+                    var bindings = response['results']['bindings'];
+                    for(var i = 0; i < bindings.length; i++) {
+                        var the_artist = bindings[i]['ArtDate']['value'];
+                        html += "<li>" + the_artist + "</li>";
+                    };
+                    $ul.html( html );
+                    $ul.listview( "refresh" );
+                    $ul.trigger( "updatelayout");
+                });
+            }
+        });
+//Select date year logic ends
+
+//Select medium logic starts
+        $( "#search-medium" ).on( "filterablebeforefilter", function ( e, data ) {
+            var $ul = $( this ),
+                $input = $( data.input ),
+                value = $input.val(),
+                html = "";
+            $ul.html( "" );
+            if ( value && value.length > 0 ) {
+                $ul.html( "<li><div class='ui-loader'><span class='ui-icon ui-icon-loading'></span></div></li>" );
+                $ul.listview( "refresh" );
+                var queryUrl = build_query('SELECT DISTINCT ?Medium WHERE {?b dc:title ?ArtWork. ?b dc:date ?ArtDate. ?b dct:medium ?Medium. ?b dc:type ?Classification. FILTER regex (?ArtWork, "XX1", "i") FILTER regex (?ArtDate, "XX2", "i") FILTER regex (?Medium, "XX3", "i") FILTER regex (?Classification, "XX4", "i")} limit 50',$("#search-artwork-title-txt" ).val(),$("#search-date-year-txt").val(),$input.val(),$("#search-classification-txt").val())
+                $.ajax({
+                    url: queryUrl,
+                    dataType: "jsonp",
+                    crossDomain: true,
+                    data: {
+                        q: $input.val()
+                    }
+                })
+                .then( function ( response ) {
+                    var bindings = response['results']['bindings'];
+                    for(var i = 0; i < bindings.length; i++) {
+                        var the_artist = bindings[i]['Medium']['value'];
+                        html += "<li>" + the_artist + "</li>";
+                    };
+                    $ul.html( html );
+                    $ul.listview( "refresh" );
+                    $ul.trigger( "updatelayout");
+                });
+            }
+        });
+        $( "#search-medium-txt-div" ).click(function() {
+            $(this).hide();
+            $( "#search-medium-div" ).show();
+        });
+        $('#search-medium').on('click', 'li', function() {
+            $( "#search-medium-txt-div" ).show()
+            $( "#search-medium-txt" ).val($(this).text())
+            $( "#search-medium-div" ).hide();
+        });
+        $( "#search-medium-div" ).hide()
+//Select medium logic ends
+
+//Select classification logic starts
+        $( "#search-classification" ).on( "filterablebeforefilter", function ( e, data ) {
+            var $ul = $( this ),
+                $input = $( data.input ),
+                value = $input.val(),
+                html = "";
+            $ul.html( "" );
+            if ( value && value.length > 0 ) {
+                $ul.html( "<li><div class='ui-loader'><span class='ui-icon ui-icon-loading'></span></div></li>" );
+                $ul.listview( "refresh" );
+                var queryUrl = build_query('SELECT DISTINCT ?Classification WHERE {?b dc:title ?ArtWork. ?b dc:date ?ArtDate. ?b dct:medium ?Medium. ?b dc:type ?Classification. FILTER regex (?ArtWork, "XX1", "i") FILTER regex (?ArtDate, "XX2", "i") FILTER regex (?Medium, "XX3", "i") FILTER regex (?Classification, "XX4", "i")} limit 50',$("#search-artwork-title-txt" ).val(),$("#search-date-year-txt").val(),$("#search-medium-txt").val(),$input.val())
+                $.ajax({
+                    url: queryUrl,
+                    dataType: "jsonp",
+                    crossDomain: true,
+                    data: {
+                        q: $input.val()
+                    }
+                })
+                .then( function ( response ) {
+                    var bindings = response['results']['bindings'];
+                    for(var i = 0; i < bindings.length; i++) {
+                        var the_artist = bindings[i]['Classification']['value'];
+                        html += "<li>" + the_artist + "</li>";
+                    };
+                    $ul.html( html );
+                    $ul.listview( "refresh" );
+                    $ul.trigger( "updatelayout");
+                });
+            }
+        });
+        $( "#search-classification-txt-div" ).click(function() {
+            $(this).hide();
+            $( "#search-classification-div" ).show();
+        });
+        $('#search-classification').on('click', 'li', function() {
+            $( "#search-classification-txt-div" ).show()
+            $( "#search-classification-txt" ).val($(this).text())
+            $( "#search-classification-div" ).hide();
+        });
+        $( "#search-classification-div" ).hide()
+//Select classification logic ends
+
+//artwork detail results logic starts
+        function populate_artwork_details(xx1,xx2,xx3,xx4) {
+            var queryUrl = build_query('SELECT ?Artist ?ArtWork ?ArtDate ?Medium ?Classification ?URL ?ThumbnailURL WHERE {?b skos:prefLabel ?Artist. ?a dc:creator ?b. ?b dc:title ?ArtWork. ?b dc:date ?ArtDate. ?b dct:medium ?Medium. ?b dc:type ?Classification. ?b owl:sameAs ?URL. ?b edm:hasView ?ThumbnailURL. FILTER regex (?ArtWork, "XX1", "i") FILTER regex (?ArtDate, "XX2", "i") FILTER regex (?Medium, "XX3", "i") FILTER regex (?Classification, "XX4", "i")} limit 50',xx1,xx2,xx3,xx4);
+            $.ajax({ url: queryUrl,
+                    type: 'get',
+                    success: function(output) {
+                        var artist_name = output['results']['bindings'][0]['Artist']['value'];
+                        var artwork = output['results']['bindings'][0]['ArtWork']['value'];
+                        var medium = output['results']['bindings'][0]['Medium']['value'];
+                        var artdate = output['results']['bindings'][0]['ArtDate']['value'];
+                        var classification = output['results']['bindings'][0]['Classification']['value'];
+                        var momaurl = output['results']['bindings'][0]['URL']['value'];
+                        var thumbnail = output['results']['bindings'][0]['ThumbnailURL']['value'];
+                        $("#artwork_details").empty();
+                        $("#artwork_details").append("Artist : "+artist_name+"<br>");
+                        $("#artwork_details").append("Artwork : "+artwork+"<br>");
+                        $("#artwork_details").append("Medium : "+medium+"<br>");
+                        $("#artwork_details").append("ArtDate : "+artdate+"<br>");
+                        $("#artwork_details").append("Classification : "+classification+"<br>");
+                        $("#artwork_details").append('MoMA URL : <a href="'+momaurl+'" target="_new">'+momaurl+'</a><br>');
+                        $("#artwork_details").append('<img src="'+thumbnail+'" /><br>');
+                    }
+            })
+        }
+//artwork detail results logic ends
+
+    </script>
+    <script type="text/javascript" src="js/index.js"></script>
+</html>

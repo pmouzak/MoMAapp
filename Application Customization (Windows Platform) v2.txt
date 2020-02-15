@@ -1,0 +1,34 @@
+MoMAapp
+
+Application Customization (Windows Platform)
+
+The project has been tested* with Apache Jena Fuseki in http://localhost:3030/ (where localhost the local ip address). Name the dataset and add the turtle file “Artworks2020.ttl”
+To configure “ip address” and "Dataset" edit the archived file “index.html” (line 102)
+
+Open command prompt
+•	Create file on root (e.g. mp) run “md mp” 
+•	Run “cd mp”
+•	Run “cordova create mp_project com.pan.mouz MoMAapp”
+•	Run “cd mp_project”
+•	Run “cordova platform add android”
+
+Open windows explorer
+•	copy/paste the content of “www” folder from GitHub to “C:\mp\mp_project\www\”  (copy and replace all files and folders)
+•	copy/paste file “network_security_config.xml” to folder “C:\mp\mp_project\platforms\android\app\src\main\res\xml” 
+
+Edit file
+•	edit file “config.xml” in folder “C:\mp\mp_project” and add the text bellow (new lines 3, 4, and 5) (Bypassing Android’s Network Security Configuration)
+1     <platform name="android">
+2          <allow-intent href="market:*" />
+3          <edit-config xmlns:android="http://schemas.android.com/apk/res/android" file="app/src/main/AndroidManifest.xml" mode="merge" target="/manifest/application">
+4                <application android:networkSecurityConfig="@xml/network_security_config" />
+5           </edit-config>
+6      </platform>
+
+Continue on command prompt
+•	Run “cordova prepare” (prepares upper changes) 
+•	Run “Cordova build android” (builds “app-debug.apk”)
+
+
+*Apache Jena Fuseki and mobile Android phone should take IP from the same rooter (localy) for the needs of the project.
+
